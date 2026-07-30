@@ -1,0 +1,90 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Environments
+venv/
+env/
+.venv/
+.env
+*.env
+!.env.example
+
+# Secrets / credentials
+*.pem
+*.key
+credentials.json
+serviceAccount*.json
+*.crt
+
+# Packaging / build output
+build/
+dist/
+*.egg-info/
+.eggs/
+site/
+
+# Models, weights, checkpoints
+*.h5
+*.pt
+*.pth
+*.pkl
+*.pickle
+*.joblib
+*.ckpt
+*.weights
+*.onnx
+*.tflite
+*.pb
+*.npz
+checkpoints/
+artifacts/
+models/
+runs/
+logs/
+
+# Datasets
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.geojson
+*.shp
+*.dbf
+*.gpkg
+!tests/fixtures/*.csv
+
+# Media / archives
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# Generated figures / reports
+outputs/
+figures/
+reports/
+
+# Node / Flutter (not used here, kept for safety)
+node_modules/
+.dart_tool/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
