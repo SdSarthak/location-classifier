@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "location-classifier"
+version = "0.1.0"
+description = "Geospatial location classification: feature engineering, model training, clustering and evaluation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Sarthak Doshi" }]
+keywords = ["geospatial", "classification", "clustering", "scikit-learn"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "scikit-learn>=1.2",
+    "matplotlib>=3.6",
+    "joblib>=1.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.2"]
+notebook = ["jupyter>=1.0"]
+
+[project.scripts]
+location-classifier = "location_classifier.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/SdSarthak/location-classifier"
+
+[tool.setuptools]
+packages = ["location_classifier"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::FutureWarning"]
