@@ -131,18 +131,24 @@ Every command accepts `--seed` and `--output-dir`; paths default to
 ### Python
 
 ```python
-from location_classifier import data, model
-from location_classifier.config import Config
-
-frame = data.make_synthetic_dataset(
-    samples_per_class=150, spread_km=2.5, sites=data.MUMBAI_ZONES, random_seed=42
+from location_classifier import (
+    Config,
+    MUMBAI_ZONES,
+    make_synthetic_dataset,
+    points_frame,
+    predict_locations,
+    train_model,
 )
 
-result = model.train_model(frame, config=Config(n_anchors=10, cv_folds=5))
+frame = make_synthetic_dataset(
+    samples_per_class=150, spread_km=2.5, sites=MUMBAI_ZONES, random_seed=42
+)
+
+result = train_model(frame, config=Config(n_anchors=10, cv_folds=5))
 print(result.accuracy, result.cv_mean)
 
-points = model.points_frame(result.pipeline, [19.076], [72.877])
-print(model.predict_locations(result.pipeline, points, top_k=3))
+points = points_frame(result.pipeline, [19.076], [72.877])
+print(predict_locations(result.pipeline, points, top_k=3))
 ```
 
 `points_frame` fills the auxiliary columns the model was trained on with their
@@ -220,7 +226,7 @@ location_classifier/
   cluster.py     k-means / DBSCAN in kilometre space
   visualize.py   matplotlib figures
   cli.py         argparse command line
-tests/           174 tests, no dataset download required
+tests/           222 tests, no dataset download required
 location_identifier.ipynb
 ```
 
