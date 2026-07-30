@@ -49,6 +49,38 @@ DEFAULT_SITES: Tuple[Site, ...] = (
     Site("Ahmedabad", 23.0225, 72.5714, 53.0, 27.5, 11_900.0),
 )
 
+#: Neighbourhoods inside a single metro. These sit 5-15 km apart, so with a
+#: realistic scatter the classes genuinely overlap — unlike the metro set, this
+#: one is not linearly separable and produces an interesting confusion matrix.
+MUMBAI_ZONES: Tuple[Site, ...] = (
+    Site("Colaba", 18.9067, 72.8147, 11.0, 27.6, 22_100.0),
+    Site("Dadar", 19.0176, 72.8562, 10.0, 27.4, 30_500.0),
+    Site("Bandra", 19.0596, 72.8295, 12.0, 27.3, 24_800.0),
+    Site("Andheri", 19.1197, 72.8468, 15.0, 27.1, 27_200.0),
+    Site("Powai", 19.1197, 72.9050, 45.0, 26.8, 12_400.0),
+    Site("Borivali", 19.2307, 72.8567, 18.0, 26.9, 19_600.0),
+    Site("Thane", 19.2183, 72.9781, 7.0, 27.0, 15_300.0),
+    Site("Vashi", 19.0770, 72.9986, 6.0, 27.2, 14_100.0),
+)
+
+#: Site collections selectable from the command line.
+SITE_COLLECTIONS: dict = {"metros": DEFAULT_SITES, "zones": MUMBAI_ZONES}
+
+
+def get_sites(name: str) -> Tuple[Site, ...]:
+    """Look up a built-in site collection by name.
+
+    Raises:
+        KeyError: if the collection does not exist.
+    """
+    try:
+        return SITE_COLLECTIONS[name]
+    except KeyError as exc:
+        raise KeyError(
+            f"unknown site collection '{name}'; choose one of "
+            f"{sorted(SITE_COLLECTIONS)}"
+        ) from exc
+
 
 class DatasetError(ValueError):
     """Raised when a dataset is missing columns or holds unusable values."""
