@@ -163,6 +163,32 @@ def test_predict_locations_rejects_bad_top_k(trained, easy_frame):
         model.predict_locations(trained.pipeline, easy_frame.head(2), top_k=0)
 
 
+def test_points_frame_imputes_training_medians(trained, easy_frame):
+    points = model.points_frame(trained.pipeline, 19.076, 72.877)
+    assert list(points.columns[:2]) == [LATITUDE_COLUMN, LONGITUDE_COLUMN]
+    for column in trained.extra_columns:
+        expected = easy_frame[column].median()
+        # Medians come from the training split, so allow a little slack.
+        assert points.loc[0, column] == pytest.approx(expected, rel=0.5)
+
+
+def test_points_frame_enables_coordinate_only_prediction(trained):
+    points = model.points_frame(trained.pipeline, [19.076, 28.6139], [72.877, 77.2090])
+    predicted = list(trained.pipeline.predict(points))
+    assert predicted == ["Mumbai", "Delhi"]
+
+
+def test_points_frame_rejects_mismatched_lengths(trained):
+    with pytest.raises(ValueError, match="mismatch"):
+        model.points_frame(trained.pipeline, [19.0, 20.0], [72.0])
+
+
+def test_fill_missing_features_leaves_present_columns_alone(trained, easy_frame):
+    sample = easy_frame.drop(columns=[LABEL_COLUMN]).head(3)
+    filled = model.fill_missing_features(trained.pipeline, sample)
+    pd.testing.assert_frame_equal(filled, sample)
+
+
 def test_feature_importances_are_named_and_ranked(trained):
     frame = model.feature_importances(trained.pipeline, limit=5)
     assert len(frame) == 5

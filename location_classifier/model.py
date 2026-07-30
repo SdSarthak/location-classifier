@@ -24,7 +24,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-from .config import LABEL_COLUMN, Config
+from .config import LABEL_COLUMN, LATITUDE_COLUMN, LONGITUDE_COLUMN, Config
 from .data import feature_columns, stratified_split, validate_dataset
 from .evaluate import evaluate_predictions
 from .features import GeoFeatureBuilder
@@ -169,7 +169,7 @@ def train_model(
     pipeline.fit(X_train, train[label_column])
 
     predictions = pipeline.predict(X_test)
-    proba = _safe_predict_proba(pipeline, X_test)
+    proba = predict_proba_or_none(pipeline, X_test)
     metrics = evaluate_predictions(
         test[label_column],
         predictions,
@@ -265,14 +265,43 @@ def compare_models(
     )
 
 
-def _safe_predict_proba(pipeline: Pipeline, X) -> Optional[np.ndarray]:
-    """Probabilities when the estimator supports them, otherwise ``None``."""
+def predict_proba_or_none(pipeline: Pipeline, X) -> Optional[np.ndarray]:
+    """Class probabilities when the estimator supports them, otherwise ``None``."""
     if not hasattr(pipeline, "predict_proba"):
         return None
     try:
         return np.asarray(pipeline.predict_proba(X), dtype=float)
     except (AttributeError, NotImplementedError):
         return None
+
+
+def points_frame(pipeline: Pipeline, lat, lon) -> pd.DataFrame:
+    """Build a model-ready frame from bare coordinates.
+
+    Auxiliary columns the pipeline was trained on (elevation, temperature, …)
+    are filled with the training median rather than zero, so a coordinate-only
+    prediction is not dragged off by an out-of-distribution feature value.
+    """
+    lat = np.atleast_1d(np.asarray(lat, dtype=float))
+    lon = np.atleast_1d(np.asarray(lon, dtype=float))
+    if lat.shape != lon.shape:
+        raise ValueError(f"lat/lon length mismatch: {lat.shape} vs {lon.shape}")
+
+    frame = pd.DataFrame({LATITUDE_COLUMN: lat, LONGITUDE_COLUMN: lon})
+    return fill_missing_features(pipeline, frame)
+
+
+def fill_missing_features(pipeline: Pipeline, frame: pd.DataFrame) -> pd.DataFrame:
+    """Add any auxiliary column the pipeline expects, using training medians."""
+    builder = pipeline.named_steps.get("features")
+    expected = list(getattr(builder, "extra_columns_", []) or [])
+    medians = getattr(builder, "extra_medians_", {}) or {}
+
+    filled = frame.copy()
+    for column in expected:
+        if column not in filled.columns:
+            filled[column] = medians.get(column, 0.0)
+    return filled
 
 
 def predict_locations(
@@ -302,7 +331,7 @@ def predict_locations(
     output = features.copy()
     output["predicted_location"] = pipeline.predict(features)
 
-    proba = _safe_predict_proba(pipeline, features)
+    proba = predict_proba_or_none(pipeline, features)
     if proba is None:
         output["confidence"] = np.nan
         return output

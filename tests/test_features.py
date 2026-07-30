@@ -117,6 +117,26 @@ def test_fit_rejects_out_of_range_coordinates():
         GeoFeatureBuilder().fit(bad)
 
 
+def test_extra_medians_are_recorded_at_fit_time(frame):
+    builder = GeoFeatureBuilder(n_anchors=3).fit(frame)
+    assert set(builder.extra_medians_) == set(builder.extra_columns_)
+    assert builder.extra_medians_["avg_temp_c"] == pytest.approx(
+        frame["avg_temp_c"].median()
+    )
+
+
+def test_extra_median_falls_back_to_zero_for_an_all_nan_column():
+    frame = pd.DataFrame(
+        {
+            LATITUDE_COLUMN: [19.0, 19.1],
+            LONGITUDE_COLUMN: [72.0, 72.1],
+            "broken": [np.nan, np.nan],
+        }
+    )
+    builder = GeoFeatureBuilder(n_anchors=2).fit(frame)
+    assert builder.extra_medians_["broken"] == 0.0
+
+
 def test_extra_column_nans_become_zero():
     frame = pd.DataFrame(
         {

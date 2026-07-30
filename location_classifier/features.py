@@ -65,6 +65,12 @@ def split_coordinates(X, extra_columns: Optional[Sequence[str]] = None):
     return array[:, 0], array[:, 1], array[:, 2:]
 
 
+def _finite_median(column: np.ndarray) -> float:
+    """Median of the finite entries, or 0.0 when there are none."""
+    finite = column[np.isfinite(column)]
+    return float(np.median(finite)) if finite.size else 0.0
+
+
 class GeoFeatureBuilder(BaseEstimator, TransformerMixin):
     """Expand coordinates into geodesy-aware numeric features.
 
@@ -80,6 +86,8 @@ class GeoFeatureBuilder(BaseEstimator, TransformerMixin):
         anchors_: ``(k, 2)`` array of learned anchor coordinates.
         centroid_: spherical centroid of the training coordinates.
         extra_columns_: columns actually passed through.
+        extra_medians_: training median of each passed-through column, used to
+            impute auxiliary features for coordinate-only inputs.
         feature_names_: names of the produced columns, in order.
     """
 
@@ -111,11 +119,17 @@ class GeoFeatureBuilder(BaseEstimator, TransformerMixin):
             ]
         self.extra_columns_ = list(extra_columns or [])
 
-        lat, lon, _ = split_coordinates(X, self.extra_columns_)
+        lat, lon, extras = split_coordinates(X, self.extra_columns_)
         validate_coordinates(lat, lon)
         if lat.size == 0:
             raise ValueError("cannot fit on an empty dataset")
 
+        # Remembered so callers can impute auxiliary features for points that
+        # only carry coordinates (a bare --lat/--lon prediction, for instance).
+        self.extra_medians_ = {
+            name: _finite_median(extras[:, index])
+            for index, name in enumerate(self.extra_columns_)
+        }
         self.centroid_ = spherical_centroid(lat, lon)
         self.anchors_ = self._learn_anchors(lat, lon)
         self.feature_names_ = self._build_feature_names()
